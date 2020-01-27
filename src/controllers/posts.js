@@ -20,6 +20,7 @@ module.exports = {
 
     const posts = await postModel
       .find({})
+      .sort('-createdAt')
       .limit(pageLimit)
       .skip((req.params.page - 1) * pageLimit);
 
