@@ -1,17 +1,39 @@
-const postModel = require("../models/posts"); 
-const userModel = require("../models/users"); 
+const postModel = require("../models/posts");
+const userModel = require("../models/users");
+const mongoose = require("mongoose");
 
 module.exports = {
+  getById: async function(req, res, next) {
+    const { postId } = req.params;
+
+    if (mongoose.Types.ObjectId.isValid(postId)) {
+      const post = await postModel.findById(postId);
+
+      if (post) {
+        return res.json({
+          status: "success",
+          message: "Post encontrado!",
+          data: post
+        });
+      } else {
+        return res.json({
+          status: "error",
+          message: "Post não encontrado!",
+          data: null
+        });
+      }
+    }
+  },
 
   pageNumbers: async function(req, res, next) {
     const pageLimit = 6;
     const posts = await postModel.find({});
 
     const maxPages = parseInt(posts.length / pageLimit + 1);
-    
+
     return res.json({
       status: "success",
-      data: maxPages,
+      data: maxPages
     });
   },
 
@@ -20,7 +42,7 @@ module.exports = {
 
     const posts = await postModel
       .find({})
-      .sort('-createdAt')
+      .sort("-createdAt")
       .limit(pageLimit)
       .skip((req.params.page - 1) * pageLimit);
 
@@ -42,8 +64,7 @@ module.exports = {
   },
 
   create: async function(req, res, next) {
-
-    const {name, avatarURL} = await userModel.findById(req.body.userId);
+    const { name, avatarURL } = await userModel.findById(req.body.userId);
 
     await postModel.create(
       {
@@ -51,7 +72,7 @@ module.exports = {
         description: req.body.description,
         content: req.body.content,
         bannerURL: req.body.bannerURL,
-        owner: {id: req.body.userId, name, avatarURL}
+        owner: { id: req.body.userId, name, avatarURL }
       },
       function(err, result) {
         if (err) {
@@ -112,46 +133,38 @@ module.exports = {
   },
 
   addComment: async function(req, res, next) {
-    await postModel.findById(req.params.postId, async (err, post) => {
-      if (err) {
+    const { name, avatarURL } = await userModel.findById(req.body.userId);
+    const post = await postModel.findById(req.params.postId);
+
+    if (post) {
+      const update = await post.updateOne({
+        comments: [
+          ...post.comments,
+          {
+            body: req.body.body,
+            owner: req.body.userId,
+            author: name,
+            avatarURL: avatarURL,
+            likes: 0,
+            date: Date.now()
+          }
+        ]
+      });
+
+      if (update) {
+        const { comments } = await postModel.findById(req.params.postId);
         res.json({
-          status: "error",
-          message: err,
-          data: null
+          status: "success",
+          message: "Comentário adicionado com sucesso!",
+          data: comments
         });
       } else {
-        if (post) {
-          // post encontrado
-          await post.update(
-            {
-              comments: [
-                ...post.comments,
-                {
-                  body: req.body.body,
-                  owner: req.body.userId,
-                  likes: 0,
-                  date: Date.now()
-                }
-              ]
-            },
-            function(err, info) {
-              if (err) {
-                res.json({
-                  status: "error",
-                  message: err,
-                  data: null
-                });
-              } else {
-                res.json({
-                  status: "success",
-                  message: "Comentário adicionado com sucesso!",
-                  data: null
-                });
-              }
-            }
-          );
-        }
+        res.json({
+          status: "error",
+          message: "Houve algum erro, tente novamente mais tarde!",
+          data: null
+        });
       }
-    });
+    }
   }
 };

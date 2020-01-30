@@ -17,7 +17,7 @@ const PostSchema = new mongoose.Schema(
       required: true
     },
     comments: {
-      type: [{ body: String, likes: Number, owner: String, date: Date }]
+      type: [{ body: String, likes: Number, owner: String, author: String, avatarURL: String, date: Date }]
     },
     bannerURL: {
       type: String,

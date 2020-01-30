@@ -12,8 +12,10 @@ router.get("/all", PostController.listAll); // Listar todos os posts
 
 // Pegar o máximo de páginas disponíveis
 router.get("/pageNumbers", PostController.pageNumbers);
-router.get("/:page", PostController.index); // Listar posts por páginas
+router.get("/blog/:page", PostController.index); // Listar posts por páginas
 
+// Pegar post por id
+router.get("/:postId", PostController.getById);
 
 router.put(
   "/update/:postId",
